@@ -31,7 +31,7 @@ const UserSchema = mongoose.Schema({
     },
     verified: {
         type: Boolean,
-        default: config.verification ? false : true
+        default: config.emailVerification ? false : true
     },
     bio: {
         type: String,

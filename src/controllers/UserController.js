@@ -10,7 +10,7 @@ module.exports = {
     onSignUp(req, res) {
         UserService.add(req.body)
             .then(user => {
-                if (config.verification) VerificationService.add(user._id)
+                if (config.emailVerification) VerificationService.add(user._id)
                 res.status(200).json({ data: user })
             })
             .catch(err => {
