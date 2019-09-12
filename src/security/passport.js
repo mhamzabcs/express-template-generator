@@ -1,5 +1,6 @@
 const UserModel = require('../models/User'),
-    LocalStrategy = require('passport-local').Strategy;
+    LocalStrategy = require('passport-local').Strategy,
+    config = require('../util/config').validation;
 
 module.exports = function(passport) {
     passport.serializeUser(function(user, done) {
@@ -14,15 +15,25 @@ module.exports = function(passport) {
     passport.use('local-login', new LocalStrategy({
             usernameField: 'email',
             passwordField: 'password',
-            // passReqToCallback: true // uncomment if you want req in callback function
         },
         function(username, password, done) {
-            UserModel.findOne({ email: username }, function(err, user) {
+            let query = { username: username }
+            if (config.loginField === 'username_email') {
+                query = {
+                    $or: [
+                        { username: username },
+                        { email: username }
+                    ]
+                }
+            } else {
+                query = {
+                    [config.loginField]: username
+                }
+            }
+            console.log(query)
+            UserModel.findOne(query, function(err, user) {
                 if (err) { return done(err); }
                 if (!user) {
-                    res.status(400).json({
-                        message: 'Incorrect email.'
-                    })
                     return done(null, false, { message: 'Incorrect email.' });
                 }
                 return UserModel.comparePassword(password, user.password)

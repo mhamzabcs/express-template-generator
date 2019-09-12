@@ -29,7 +29,8 @@ module.exports = {
             .catch(err => console.log(err))
     },
     onLoginSuccess(req, res) {
-        // after successfull authentication from passport strategy.
-        // return user data or whatever you want.
+        res.status(200).json({ data: req.user })
+            // after successfull authentication from passport strategy.
+            // return user data or whatever you want.
     }
 }
