@@ -15,8 +15,9 @@ module.exports = function(passport) {
     passport.use('local-login', new LocalStrategy({
             usernameField: 'email',
             passwordField: 'password',
+            passReqToCallback: true
         },
-        function(username, password, done) {
+        function(req, username, password, done) {
             let query = { username: username }
             if (config.validation.loginField === 'username_email') {
                 query = {
@@ -33,21 +34,23 @@ module.exports = function(passport) {
             UserModel.findOne(query, function(err, user) {
                 if (err) { return done(err); }
                 if (!user) {
-                    return done(null, false, { message: 'Incorrect email.' });
+                    return done(null, false, req.flash('message', "User with these credentials does not exist"));
+                }
+                console.log(user)
+                if (config.verification.emailVerification && !config.verification.loginWithoutVerification) {
+                    if (!user.verified) {
+                        return done(null, false, req.flash('message', "You must activate account first."));
+                    }
                 }
                 return UserModel.comparePassword(password, user.password)
                     .then(isMatch => {
                         if (isMatch) return done(null, user);
                         else {
-                            return done(null, false, {
-                                message: 'Invalid password'
-                            });
+                            return done(null, false, req.flash('message', "Wrong Password"));
                         }
                     })
                     .catch(err => {
-                        return done(null, false, {
-                            message: 'Unknown error occurred'
-                        });
+                        return done(null, false, req.flash('message', "Unknown error occurred"));
                     });
             });
         }

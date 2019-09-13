@@ -4,7 +4,9 @@ const createError = require('http-errors'),
     cookieParser = require('cookie-parser'),
     logger = require('morgan'),
     mongoose = require('mongoose'),
-    passport = require('passport');
+    passport = require('passport'),
+    flash = require('connect-flash'),
+    session = require('express-session');
 
 require('./src/security/passport')(passport);
 
@@ -30,11 +32,21 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    name: process.env.COOKIE_NAME,
+    resave: false,
+    saveUninitialized: true,
+}))
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 
 app.use(passport.initialize());
 app.use(passport.session()); // persistent login sessions
+
+app.use(flash());
 require('./src/routes')(app, passport);
 
 

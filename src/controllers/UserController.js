@@ -31,6 +31,9 @@ module.exports = {
     onLoginSuccess(req, res) {
         res.status(200).json({ data: req.user })
     },
+    failureRedirect(req, res) {
+        res.status(400).json({ message: req.flash('message')[0] });
+    },
     onEmailVerification(req, res) {
         UserService.verifyEmail(req.query.token)
             .then(resp => {
