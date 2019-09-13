@@ -14,6 +14,10 @@ mongoose.connect(process.env.DB_URL, { useNewUrlParser: true, useCreateIndex: tr
 });
 
 
+mongoose.set('useCreateIndex', true);
+mongoose.plugin(schema => {
+    schema.set('timestamps', true);
+});
 
 
 const app = express();

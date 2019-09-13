@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const tables = require('./index').collectionNames;
-const config = require('../util/config').validation;
+const config = require('../util/config');
 
 let letter = /[a-zA-Z]/;
 let number = /[0-9]/;
@@ -14,12 +14,12 @@ const UserSchema = mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true
+        // unique: true
     },
     email: {
         type: String,
         required: true,
-        unique: true
+        // unique: true
     },
     password: {
         type: String,
@@ -27,16 +27,16 @@ const UserSchema = mongoose.Schema({
         validate: {
             validator: function(v) {
                 let valid = true;
-                if (config.passwordAlphaNumeric) {
+                if (config.validation.passwordAlphaNumeric) {
                     valid = number.test(v) && letter.test(v);
                 }
-                return (v.length >= config.passwordLength) && valid;
+                return (v.length >= config.validation.passwordLength) && valid;
             }
         },
     },
     verified: {
         type: Boolean,
-        default: config.emailVerification ? false : true
+        default: config.verification.emailVerification ? false : true
     },
     bio: {
         type: String,

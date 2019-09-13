@@ -1,9 +1,8 @@
 const BaseService = require('./BaseService'),
     Model = require('../models/Verification'),
-    constants = require('../util/constants');
-
-
-
+    constants = require('../util/constants'),
+    MailService = require('./MailService'),
+    CryptoJS = require("crypto-js");
 
 class VerificationService extends BaseService {
 
@@ -11,17 +10,22 @@ class VerificationService extends BaseService {
         super(Model);
     }
 
-    add(userId) {
+    add(userId, userEmail) {
         const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        let verifying_str = "";
+        let randomStr = "";
         for (let i = 0; i < 8; i++) {
-            verifying_str += possible.charAt(Math.floor(Math.random() * possible.length));
+            randomStr += possible.charAt(Math.floor(Math.random() * possible.length));
         }
+        let str = randomStr + userEmail
+        let hash = CryptoJS.AES.encrypt(str, process.env.CRYPTO_SECRET);
+        console.log(str)
+        console.log(hash)
         new Model({
             userId: userId,
             verificationType: constants.mailType.emailVerification,
-            token: verifying_str
+            token: hash
         }).save()
+        MailService.sendVerificationMail(userEmail, hash);
     }
 
 }

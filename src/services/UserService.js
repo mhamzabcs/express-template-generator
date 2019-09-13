@@ -1,5 +1,9 @@
 const Model = require('../models/User'),
-    BaseService = require('../services/BaseService');
+    BaseService = require('../services/BaseService'),
+    CryptoJS = require("crypto-js"),
+    VerificationModel = require('../models/Verification'),
+    constants = require('../util/constants'),
+    config = require('../util/config');
 
 class UserService extends BaseService {
 
@@ -32,6 +36,45 @@ class UserService extends BaseService {
             })
             .catch(err => {
                 return Promise.reject(err);
+            })
+    }
+
+    // TO:DO Better way for this
+    verifyEmail(token) {
+        // token = token.replace(" ", "+");
+        token = token.replace(/ /g, "+")
+        let bytes = CryptoJS.AES.decrypt(token.toString(), process.env.CRYPTO_SECRET);
+        let plaintext = bytes.toString(CryptoJS.enc.Utf8);
+        let email = plaintext.substring(8, plaintext.length)
+
+        return Model.findOne({ email: email })
+            .then(user => {
+                if (user) {
+                    return VerificationModel.findOne({ userId: user._id, verificationType: constants.mailType.emailVerification }).lean()
+                        .then(resp => {
+                            if (resp) {
+                                if (resp.updatedAt > (new Date() - 1000 * 60 * config.verification.emailExpireTime)) {
+                                    return VerificationModel.deleteOne({ _id: resp._id })
+                                        .then(resp => {
+                                            return Model.updateOne({ email: email, verified: true }).lean()
+                                                .then(resp => {
+                                                    return "User verified"
+                                                })
+                                        })
+                                } else {
+                                    // generate new one here
+                                    VerificationModel.deleteOne({ _id: resp._id })
+                                        .then(deleted => {})
+                                        .catch(err => console.log(err))
+                                    return "token expired"
+                                }
+                            } else {
+                                return "Invalid token"
+                            }
+                        })
+                } else {
+                    return "No user found";
+                }
             })
     }
 

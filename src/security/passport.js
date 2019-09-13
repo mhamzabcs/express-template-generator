@@ -1,6 +1,6 @@
 const UserModel = require('../models/User'),
     LocalStrategy = require('passport-local').Strategy,
-    config = require('../util/config').validation;
+    config = require('../util/config');
 
 module.exports = function(passport) {
     passport.serializeUser(function(user, done) {
@@ -18,7 +18,7 @@ module.exports = function(passport) {
         },
         function(username, password, done) {
             let query = { username: username }
-            if (config.loginField === 'username_email') {
+            if (config.validation.loginField === 'username_email') {
                 query = {
                     $or: [
                         { username: username },
@@ -27,10 +27,9 @@ module.exports = function(passport) {
                 }
             } else {
                 query = {
-                    [config.loginField]: username
+                    [config.validation.loginField]: username
                 }
             }
-            console.log(query)
             UserModel.findOne(query, function(err, user) {
                 if (err) { return done(err); }
                 if (!user) {

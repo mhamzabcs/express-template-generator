@@ -1,7 +1,7 @@
 const UserService = require('../services/UserService'),
     validation = require('../util/validation'),
     VerificationService = require('../services/VerificationService'),
-    config = require('../util/config').validation;
+    config = require('../util/config');
 
 module.exports = {
     index(req, res) {
@@ -10,7 +10,7 @@ module.exports = {
     onSignUp(req, res) {
         UserService.add(req.body)
             .then(user => {
-                if (config.emailVerification) VerificationService.add(user._id)
+                if (config.verification.emailVerification) VerificationService.add(user._id, user.email)
                 res.status(200).json({ data: user })
             })
             .catch(err => {
@@ -30,7 +30,12 @@ module.exports = {
     },
     onLoginSuccess(req, res) {
         res.status(200).json({ data: req.user })
-            // after successfull authentication from passport strategy.
-            // return user data or whatever you want.
+    },
+    onEmailVerification(req, res) {
+        UserService.verifyEmail(req.query.token)
+            .then(resp => {
+                res.status(200).json({ message: resp })
+            })
+            .catch(err => console.log(err))
     }
 }

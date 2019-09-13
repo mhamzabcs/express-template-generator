@@ -7,5 +7,7 @@ router.post('/', UserController.onSignUp);
 
 router.put('/:userId', UserController.onUpdate);
 
+router.get('/verify-email/', UserController.onEmailVerification);
+
 
 module.exports = router;
