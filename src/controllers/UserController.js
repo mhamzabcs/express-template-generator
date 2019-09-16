@@ -43,6 +43,25 @@ module.exports = {
             })
             .catch(err => console.log(err))
     },
+    socialLoginAllowed(req, res, next) {
+        if (config.routes.socialLogin === 'both') {
+            next();
+        }
+        else if (config.routes.socialLogin === 'none') {
+            res.status(401).send('Not allowed');
+        }
+        else {
+            if (req.path.includes('google') && config.routes.socialLogin !== 'google') {
+                res.status(401).send('Not allowed');
+            }
+            else if (req.path.includes('facebook') && config.routes.socialLogin !== 'facebook') {
+                res.status(401).send('Not allowed');
+            }
+            else {
+                next();
+            }
+        }
+    },
     onGoogleLogin(req, res) {
         res.redirect(getUrl());
     },
