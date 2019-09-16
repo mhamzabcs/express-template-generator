@@ -36,7 +36,6 @@ module.exports = function(passport) {
                 if (!user) {
                     return done(null, false, req.flash('message', "User with these credentials does not exist"));
                 }
-                console.log(user)
                 if (config.verification.emailVerification && !config.verification.loginWithoutVerification) {
                     if (!user.verified) {
                         return done(null, false, req.flash('message', "You must activate account first."));

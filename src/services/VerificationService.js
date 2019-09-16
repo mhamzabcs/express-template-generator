@@ -18,8 +18,6 @@ class VerificationService extends BaseService {
         }
         let str = randomStr + userEmail
         let hash = CryptoJS.AES.encrypt(str, process.env.CRYPTO_SECRET);
-        console.log(str)
-        console.log(hash)
         new Model({
             userId: userId,
             verificationType: constants.mailType.emailVerification,

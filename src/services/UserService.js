@@ -1,9 +1,12 @@
 const Model = require('../models/User'),
+    Social = require('../models/Social'),
     BaseService = require('../services/BaseService'),
     CryptoJS = require("crypto-js"),
     VerificationModel = require('../models/Verification'),
     constants = require('../util/constants'),
-    config = require('../util/config');
+    config = require('../util/config'),
+    { getProfile } = require('../security/google'),
+    { getFacebookProfile } = require('../security/facebook');
 
 class UserService extends BaseService {
 
@@ -19,7 +22,7 @@ class UserService extends BaseService {
     add(body) {
         let user = new Model(body);
         return user.validate()
-            .then(function() {
+            .then(function () {
                 return Model.findOne({ email: body.email }).lean()
                     .then(resp => {
                         if (resp) {
@@ -64,7 +67,7 @@ class UserService extends BaseService {
                                 } else {
                                     // generate new one here
                                     VerificationModel.deleteOne({ _id: resp._id })
-                                        .then(deleted => {})
+                                        .then(deleted => { })
                                         .catch(err => console.log(err))
                                     return "token expired"
                                 }
@@ -76,6 +79,74 @@ class UserService extends BaseService {
                     return "No user found";
                 }
             })
+    }
+
+    addSocialAccount(path, code, accessToken) {
+        let profile, source;
+        if (path.includes('google')) {
+            profile = getProfile(code)
+            source = constants.socialType.google;
+        } else if (path.includes('facebook')) {
+            profile = getFacebookProfile(code, accessToken)
+            source = constants.socialType.facebook;
+        }
+        return profile.then(resp => {
+            let body;
+            if (source === constants.socialType.google) {
+                body = resp.data
+            } else {
+                body = resp;
+            }
+            return this.addUserSocial(body, source)
+                .then(newUser => {
+                    return this.get(newUser.userId)
+                        .then(user => {
+                            return user
+                        })
+                        .catch(err => console.log(err))
+                })
+                .catch(err => {
+                    console.log(err)
+                })
+        })
+    }
+
+    addUserSocial(data, source) {
+        return Social.find({ accountId: data.id, source: source }).lean()
+            .then(resp => {
+                if (resp.length === 0) {
+                    return Model.find({ email: data.email }).lean()
+                        .then(res => {
+                            if (res.length === 0) {
+                                let body = {
+                                    name: data.name,
+                                    email: data.email,
+                                    socialAccounts: [data.id],
+                                    verified: !config.verification.socialVerification
+                                }
+                                return new Model(body).save({ validateBeforeSave: false })
+                                    .then(newUser => {
+                                        return new Social({
+                                            source: source,
+                                            userId: newUser._id,
+                                            accountId: data.id, //google/facebook id
+                                        }).save()
+                                    })
+                            } else {
+                                Model.updateOne({ _id: res[0]._id }, { $push: { socialAccounts: data.id } })
+                                    .then(updated => { })
+                                    .catch(err => console.log(err))
+                                return new Social({
+                                    source: source,
+                                    userId: res[0]._id,
+                                    accountId: data.id, //google/facebook id
+                                }).save()
+                            }
+                        })
+                } else {
+                    return resp[0];
+                }
+            });
     }
 
 }

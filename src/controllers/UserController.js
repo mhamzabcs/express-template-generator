@@ -1,7 +1,9 @@
 const UserService = require('../services/UserService'),
     validation = require('../util/validation'),
     VerificationService = require('../services/VerificationService'),
-    config = require('../util/config');
+    config = require('../util/config'),
+    { getUrl } = require('../security/google'),
+    { getFacebookUrl } = require('../security/facebook');
 
 module.exports = {
     index(req, res) {
@@ -40,5 +42,19 @@ module.exports = {
                 res.status(200).json({ message: resp })
             })
             .catch(err => console.log(err))
-    }
+    },
+    onGoogleLogin(req, res) {
+        res.redirect(getUrl());
+    },
+    onFacebookLogin(req, res) {
+        res.redirect(getFacebookUrl());
+    },
+    afterSocialLogin(req, res) {
+        UserService.addSocialAccount(req.path, req.query.code, req.query.access_token)
+            .then(resp => {
+                if (config.verification.socialVerification && !resp[0].verified) VerificationService.add(resp[0]._id, resp[0].email)
+                res.status(200).json({ data: resp })
+            })
+            .catch(err => console.log)
+    },
 }

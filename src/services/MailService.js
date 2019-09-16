@@ -4,12 +4,12 @@ const UserModel = require('../models/User');
 
 class MailService {
 
-    constructor() {}
+    constructor() { }
 
     sendVerificationMail(email, token) {
 
         const mailOptions = {
-            from: 'talha@approcket.xyz',
+            from: process.env.FROM_MAIL,
             to: email,
             subject: 'Zazu LineSkipper Email Verification',
             text: 'Use this link to verify your account: ' + process.env.BASE_URL + '/users/verify-email?token=' + token
@@ -19,11 +19,11 @@ class MailService {
             port: 465,
             secure: true, // use SSL
             auth: {
-                user: 'talha@approcket.xyz',
-                pass: 'AppRocket001!'
+                user: process.env.MAIL_USER,
+                pass: process.env.MAIL_PASS
             }
         });
-        transporter.sendMail(mailOptions, function(err, info) {});
+        transporter.sendMail(mailOptions, function (err, info) { });
     }
 
 }
